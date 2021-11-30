@@ -1,0 +1,557 @@
+import { StatusBar } from 'expo-status-bar';
+import React from 'react';
+import { createAppContainer } from 'react-navigation';
+import { createStackNavigator } from 'react-navigation-stack';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList, Alert } from 'react-native';
+import listStudents from './components/listStudents';
+import Users from './components/Users';
+
+class User extends React.Component {
+
+  constructor(props) {
+
+    super(props)
+
+    this.state = {
+      Rent_ID: '',
+      Rent_BookID: '',
+      Rent_UserID: '',
+      Rent_Date: '',
+      dataSource: []
+    }
+
+  }
+
+  refreshRents() {
+    fetch("http://localhost:8081/renta/ShowAllRents.php")
+      .then((response) => response.json())
+      .then((responseJson) => {
+        this.setState({
+          dataSource: responseJson
+        })
+      })
+  }
+
+  componentDidMount() {
+
+    this.refreshRents();
+
+  }
+
+  InsertRent = () => {
+    fetch("http://localhost:8081/renta/InsertRent.php", {
+      method: "POST",
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        rent_bookID: this.state.Rent_BookID,
+        rent_userID: this.state.Rent_UserID,
+        rent_date: this.state.Rent_Date
+      })
+    })
+      .then((response) => response.json())
+      .then((responseJson) => {
+        alert(responseJson);
+        this.refreshRents();
+      })
+      .catch((error) => {
+        console.error(error)
+      })
+  }
+
+  SearchRent = () => {
+    fetch("http://localhost:8081/renta/ShowRent.php", {
+      method: "POST",
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        rent_id: this.state.Rent_ID,
+      })
+    })
+      .then((response) => response.json())
+      .then((responseJson) => {
+        this.setState({
+          Rent_BookID: responseJson[0]['rent_bookID'],
+          Rent_UserID: responseJson[0]['rent_userID'],
+          Rent_Date: responseJson[0]['rent_date']
+        })
+
+
+      })
+      .catch((error) => {
+        alert("Id de la renta no se encuentra");
+
+        this.state = {
+          Rent_ID: '',
+          Rent_BookID: '',
+          Rent_UserID: '',
+          Rent_Date: ''
+        }
+      })
+  }
+
+  UpdateRent = () => {
+    fetch("http://localhost:8081/renta/UpdateRent.php", {
+      method: "PUT",
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        rent_id: this.state.Rent_ID,
+        rent_bookID: this.state.Rent_BookID,
+        rent_userID: this.state.Rent_UserID,
+        rent_date: this.state.Rent_Date
+      })
+    })
+      .then((res) => res.json())
+      .then((resJson) => {
+        alert(resJson);
+        this.refreshRents()
+      })
+      .catch((error) => {
+        console.error(error)
+      })
+  }
+
+  DeleteRent = () => {
+    fetch("http://localhost:8081/renta/DeleteRent.php", {
+      method: "POST",
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        rent_id: this.state.Rent_ID,
+      })
+    })
+      .then((response) => response.json())
+      .then((responseJson) => {
+        alert(responseJson);
+        this.refreshRents()
+      })
+      .catch((error) => {
+        console.error(error)
+      })
+  }
+
+  render() {
+    return (
+      <View style={styles.MainContainer}>
+        
+        <Text style={{ fontSize: 20, textAlign: 'center', marginBottom: 7 }}> Registro de Rentas </Text>
+        <TextInput
+          placeholder="Ingrese el Id del Usuario"
+          onChangeText={TextInputValue => this.setState({ Rent_ID: TextInputValue })}
+          underlineColorAndroid='transparent'
+          style={styles.TextInputStyleClass}
+          value={this.state.Rent_ID}
+        />
+        <TextInput
+          placeholder="Ingrese el nombre del Usuario"
+          onChangeText={TextInputValue => this.setState({ Rent_BookID: TextInputValue })}
+          underlineColorAndroid='transparent'
+          style={styles.TextInputStyleClass}
+          value={this.state.Rent_BookID}
+          autoFocus={true}
+        />
+        <TextInput
+          placeholder="Ingrese el telefono del Usuario"
+          onChangeText={TextInputValue => this.setState({ Rent_UserID: TextInputValue })}
+          underlineColorAndroid='transparent'
+          style={styles.TextInputStyleClass}
+          value={this.state.Rent_UserID}
+        />
+        <TextInput
+          placeholder="Ingrese el correo del Usuario"
+          onChangeText={TextInputValue => this.setState({ Rent_Date: TextInputValue })}
+          underlineColorAndroid='transparent'
+          style={styles.TextInputStyleClass}
+          value={this.state.Rent_Date}
+         />
+      
+        <TouchableOpacity activeOpacity={.4} style={styles.TouchableOpacityStyle} onPress={this.InsertRent} >
+          <Text style={styles.TextStyle}> Agregar </Text>
+        </TouchableOpacity>
+        <TouchableOpacity activeOpacity={.4} style={styles.TouchableOpacityStyle} onPress={this.SearchRent} >
+          <Text style={styles.TextStyle}> Buscar </Text>
+        </TouchableOpacity>
+        <TouchableOpacity activeOpacity={.4} style={styles.TouchableOpacityStyle} onPress={this.UpdateRent} >
+          <Text style={styles.TextStyle}> Actualizar </Text>
+        </TouchableOpacity>
+        <TouchableOpacity activeOpacity={.4} style={styles.TouchableOpacityStyle} onPress={this.DeleteRent} >
+          <Text style={styles.TextStyle}> Eliminar </Text>
+        </TouchableOpacity>
+        <TouchableOpacity activeOpacity={.4} style={styles.TouchableOpacityStyle} onPress={() => this.props.navigation.navigate('Usuarios')}>
+          <Text style={styles.TextStyle}> Listar </Text>
+        </TouchableOpacity>
+        <TouchableOpacity activeOpacity={.4} style={styles.TouchableOpacityStyle} onPress={() => this.props.navigation.navigate('Sesion')}>
+          <Text style={styles.TextStyle}> Iniciar Sesion/Registrar</Text>
+        </TouchableOpacity>
+        {/* <FlatList
+          data={this.state.dataSource}
+          renderItem={({ item }) =>
+            <TouchableOpacity onPress={() => alert(item.rent_bookID + " " + item.rent_userID)}
+              style={styles.TouchableOpacityStyle}>
+              <Text>{item.rent_bookID} - {item.rent_userID}</Text>
+            </TouchableOpacity>
+          }
+        /> */}
+
+      </View>
+    );
+  }
+}
+
+const RootStack = createStackNavigator(
+  {
+    Inicio: User,
+    Rentas:listRents,
+    Sesion:Users
+  },
+  {
+    initialRouteName: 'Sesion',
+  }
+);
+
+const AppContainer = createAppContainer(RootStack);
+
+export default class App extends React.Component {
+  render() {
+    return <AppContainer />;
+  }
+}
+
+const styles = StyleSheet.create({
+
+  MainContainer: {
+
+    alignItems: 'center',
+    flex: 1,
+    paddingTop: 30,
+    backgroundColor: '#fff'
+
+  },
+
+  TextInputStyleClass: {
+
+    textAlign: 'center',
+    width: '90%',
+    marginBottom: 7,
+    height: 40,
+    borderWidth: 1,
+    borderColor: '#FF5722',
+    borderRadius: 5,
+
+  },
+
+  TouchableOpacityStyle: {
+
+    paddingTop: 10,
+    paddingBottom: 10,
+    borderRadius: 5,
+    marginBottom: 7,
+    width: '90%',
+    backgroundColor: '#00BCD4'
+
+  },
+
+  TextStyle: {
+    color: '#fff',
+    textAlign: 'center',
+  },
+
+  rowViewContainer: {
+    fontSize: 20,
+    paddingRight: 10,
+    paddingTop: 10,
+    paddingBottom: 10,
+  }
+
+});
+***********************************************************************************************************************************************************************
+
+import React from 'react';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList, Alert } from 'react-native';
+
+export default class listRents extends React.Component {
+
+    constructor(props) {
+
+        super(props)
+        this.state = {
+            dataSource: []
+        }
+    }
+    refreshRents() {
+        fetch("http://localhost:8081/renta/ShowAllRents.php")
+            .then((response) => response.json())
+            .then((responseJson) => {
+                this.setState({
+                    dataSource: responseJson
+                })
+            })
+    }
+
+    componentDidMount() {
+
+        this.refreshRents();
+    
+      }
+
+    render() {
+        return (
+            <FlatList
+                data={this.state.dataSource}
+                renderItem={({ item }) =>
+                    <TouchableOpacity onPress={() => alert(item.rent_bookID + " " + item.rent_userID)}
+                        style={styles.TouchableOpacityStyle}>
+                        <Text>{item.rent_bookID} - {item.rent_userID}</Text>
+                    </TouchableOpacity>
+                }
+            />
+        )
+    }
+
+}
+
+const styles = StyleSheet.create({
+
+    MainContainer: {
+
+        alignItems: 'center',
+        flex: 1,
+        paddingTop: 30,
+        backgroundColor: '#fff'
+
+    },
+
+    TextInputStyleClass: {
+
+        textAlign: 'center',
+        width: '90%',
+        marginBottom: 7,
+        height: 40,
+        borderWidth: 1,
+        borderColor: '#FF5722',
+        borderRadius: 5,
+
+    },
+
+    TouchableOpacityStyle: {
+
+        paddingTop: 10,
+        paddingBottom: 10,
+        borderRadius: 5,
+        marginBottom: 3,
+        width: '100%',
+        backgroundColor: '#00BCD4'
+
+    },
+
+    TextStyle: {
+        color: '#fff',
+        textAlign: 'center',
+    },
+
+    rowViewContainer: {
+        fontSize: 20,
+        paddingRight: 10,
+        paddingTop: 10,
+        paddingBottom: 10,
+    }
+
+});
+
+**********************************************************************************************************************************************************************
+
+import React from 'react';
+import { Alert,StyleSheet, 
+  Text, View, TextInput, TouchableOpacity } from 'react-native';
+import App from '../App';
+
+export default class Users extends React.Component {
+
+  constructor(props) {
+
+    super(props)
+
+    this.state = {
+      ID: '',
+      Name: '',
+      Email: '',
+      Password: ''
+    }
+
+  }
+
+
+  SearchUser =  () => {
+
+    fetch(`http://localhost:8081/renta/SearchUser.php`, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+    },
+      body: JSON.stringify({
+        email: this.state.Email,
+        password: this.state.Password
+      })
+    })
+      .then((response) => response.json())
+      .then((responseJson) => {
+        this.setState({
+          Name: responseJson[0]['name'],
+          Email: responseJson[0]['email'],
+          Password: responseJson[0]['password']
+        })
+        this.props.navigation.navigate('Inicio', { 
+            Name: this.state.Name
+          })
+        //alert(this.state.Name);
+      }).catch((error) => {
+        alert('No se encuentra el Usuario');
+        this.setState({
+          ID: '',
+          Name: '',
+          Email: '',
+          Password: '',
+        })
+      });
+
+  }
+  
+  RegisterUser = () => {
+    fetch("http://localhost:8081/renta/RegisterUser.php", {
+      method: "POST",
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        user_name: this.state.User_Name,
+        user_email: this.state.User_Email,
+        user_password: this.state.User_Password
+      })
+    })
+      .then((response) => response.json())
+      .then((responseJson) => {
+        alert(responseJson);
+        //this.refreshBooks();
+      })
+//this.props.navigation.navigate('Inicio', {Name: this.state.Name})
+      .catch((error) => {
+        console.error(error)
+      })
+  }
+
+  render() {
+    return (
+      <View style={styles.MainContainer}>
+        <Text style={{ fontSize: 20, textAlign: 'center', marginBottom: 7 }}> Registro de Usuarios </Text>
+        <TextInput
+          placeholder="Nombre de Usuario"
+          onChangeText={TextInputValue => this.setState({ Name: TextInputValue })}
+          underlineColorAndroid='transparent'
+          style={styles.TextInputStyleClass}
+          value={this.state.Name}
+          autoFocus={true}
+          
+        />
+        <TextInput
+          placeholder="Correo electrónico"
+          onChangeText={TextInputValue => this.setState({ Email: TextInputValue })}
+          underlineColorAndroid='transparent'
+          style={styles.TextInputStyleClass}
+          value={this.state.Email}
+        />
+        <TextInput
+          placeholder="Contraseña"
+          onChangeText={TextInputValue => this.setState({ Password: TextInputValue })}
+          underlineColorAndroid='transparent'
+          secureTextEntry={true}
+          style={styles.TextInputStyleClass}
+          value={this.state.Password}
+          
+        />
+        
+        <TouchableOpacity activeOpacity={.4} style={styles.TouchableOpacityStyle} onPress={this.SearchUser} >
+          <Text style={styles.TextStyle}> Iniciar Sesión </Text>
+        </TouchableOpacity>
+        <TouchableOpacity activeOpacity={.4} style={styles.TouchableOpacityStyle} onPress={this.RegisterUser} >
+          <Text style={styles.TextStyle}> Registrar </Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+}
+
+const styles = StyleSheet.create({
+
+  MainContainer: {
+
+    alignItems: 'center',
+    flex: 1,
+    paddingTop: 30,
+    backgroundColor: '#fff'
+
+  },
+
+  TextInputStyleClass: {
+
+    textAlign: 'center',
+    width: '90%',
+    marginBottom: 7,
+    height: 40,
+    borderWidth: 1,
+    borderColor: '#FF5722',
+    borderRadius: 5,
+
+  },
+
+  TouchableOpacityStyle: {
+
+    paddingTop: 10,
+    paddingBottom: 10,
+    borderRadius: 5,
+    marginBottom: 7,
+    width: '50%',
+    backgroundColor: '#00BCD4'
+
+  },
+
+  TextStyle: {
+    color: '#fff',
+    textAlign: 'center',
+  },
+
+  rowViewContainer: {
+    fontSize: 20,
+    paddingRight: 10,
+    paddingTop: 10,
+    paddingBottom: 10,
+  }
+
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

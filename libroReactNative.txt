@@ -1,0 +1,558 @@
+import { StatusBar } from 'expo-status-bar';
+import React from 'react';
+import { createAppContainer } from 'react-navigation';
+import { createStackNavigator } from 'react-navigation-stack';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList, Alert } from 'react-native';
+import listStudents from './components/listStudents';
+import Users from './components/Users';
+
+class Book extends React.Component {
+
+  constructor(props) {
+
+    super(props)
+
+    this.state = {
+      Book_ID: '',
+      Book_Code: '',
+      Book_Name: '',
+      Book_Stade: '',
+      dataSource: []
+    }
+
+  }
+
+  refreshBooks() {
+    fetch("http://localhost:8080/libro/ShowAllBooks.php")
+      .then((response) => response.json())
+      .then((responseJson) => {
+        this.setState({
+          dataSource: responseJson
+        })
+      })
+  }
+
+  componentDidMount() {
+
+    this.refreshBooks();
+
+  }
+
+  InsertBook = () => {
+    fetch("http://localhost:8080/libro/InsertBook.php", {
+      method: "POST",
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        book_code: this.state.Book_Code,
+        book_name: this.state.Book_Name,
+        book_stade: this.state.Book_Stade
+      })
+    })
+      .then((response) => response.json())
+      .then((responseJson) => {
+        alert(responseJson);
+        this.refreshBooks();
+      })
+      .catch((error) => {
+        console.error(error)
+      })
+  }
+
+  SearchBook = () => {
+    fetch("http://localhost:8080/libro/ShowBook.php", {
+      method: "POST",
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        book_id: this.state.Book_ID,
+      })
+    })
+      .then((response) => response.json())
+      .then((responseJson) => {
+        this.setState({
+          Book_Code: responseJson[0]['book_code'],
+          Book_Name: responseJson[0]['book_name'],
+          Book_Stade: responseJson[0]['book_stade']
+        })
+
+
+      })
+      .catch((error) => {
+        alert("Id del libro no se encuentra");
+
+        this.state = {
+          Book_ID: '',
+          Book_Code: '',
+          Book_Name: '',
+          Book_Stade: ''
+        }
+      })
+  }
+
+  UpdateBook = () => {
+    fetch("http://localhost:8080/libro/UpdateBook.php", {
+      method: "PUT",
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        book_id: this.state.Book_ID,
+        book_code: this.state.Book_Code,
+        book_name: this.state.Book_Name,
+        book_stade: this.state.Book_Stade
+      })
+    })
+      .then((res) => res.json())
+      .then((resJson) => {
+        alert(resJson);
+        this.refreshBooks()
+      })
+      .catch((error) => {
+        console.error(error)
+      })
+  }
+
+  DeleteBook = () => {
+    fetch("http://localhost:8080/libro/DeleteBook.php", {
+      method: "POST",
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        book_id: this.state.Book_ID,
+      })
+    })
+      .then((response) => response.json())
+      .then((responseJson) => {
+        alert(responseJson);
+        this.refreshBooks()
+      })
+      .catch((error) => {
+        console.error(error)
+      })
+  }
+
+  render() {
+    return (
+      <View style={styles.MainContainer}>
+        
+        <Text style={{ fontSize: 20, textAlign: 'center', marginBottom: 7 }}> Registro de Libros </Text>
+        <TextInput
+          placeholder="Ingrese el Id del libro"
+          onChangeText={TextInputValue => this.setState({ Book_ID: TextInputValue })}
+          underlineColorAndroid='transparent'
+          style={styles.TextInputStyleClass}
+          value={this.state.Book_ID}
+        />
+        <TextInput
+          placeholder="Ingrese el codigo del libro"
+          onChangeText={TextInputValue => this.setState({ Book_Code: TextInputValue })}
+          underlineColorAndroid='transparent'
+          style={styles.TextInputStyleClass}
+          value={this.state.Book_Code}
+          autoFocus={true}
+        />
+        <TextInput
+          placeholder="Ingrese el nombre del libro"
+          onChangeText={TextInputValue => this.setState({ Book_Name: TextInputValue })}
+          underlineColorAndroid='transparent'
+          style={styles.TextInputStyleClass}
+          value={this.state.Book_Name}
+        />
+        <TextInput
+          placeholder="Ingrese el estado del libro"
+          onChangeText={TextInputValue => this.setState({ Book_Stade: TextInputValue })}
+          underlineColorAndroid='transparent'
+          style={styles.TextInputStyleClass}
+          value={this.state.Book_Stade}
+
+        />
+        <TouchableOpacity activeOpacity={.4} style={styles.TouchableOpacityStyle} onPress={this.InsertBook} >
+          <Text style={styles.TextStyle}> Agregar </Text>
+        </TouchableOpacity>
+        <TouchableOpacity activeOpacity={.4} style={styles.TouchableOpacityStyle} onPress={this.SearchBook} >
+          <Text style={styles.TextStyle}> Buscar </Text>
+        </TouchableOpacity>
+        <TouchableOpacity activeOpacity={.4} style={styles.TouchableOpacityStyle} onPress={this.UpdateBook} >
+          <Text style={styles.TextStyle}> Actualizar </Text>
+        </TouchableOpacity>
+        <TouchableOpacity activeOpacity={.4} style={styles.TouchableOpacityStyle} onPress={this.DeleteBook} >
+          <Text style={styles.TextStyle}> Eliminar </Text>
+        </TouchableOpacity>
+        <TouchableOpacity activeOpacity={.4} style={styles.TouchableOpacityStyle} onPress={() => this.props.navigation.navigate('Libros')}>
+          <Text style={styles.TextStyle}> Listar </Text>
+        </TouchableOpacity>
+        <TouchableOpacity activeOpacity={.4} style={styles.TouchableOpacityStyle} onPress={() => this.props.navigation.navigate('Sesion')}>
+          <Text style={styles.TextStyle}> Iniciar Sesion/Registrar</Text>
+        </TouchableOpacity>
+        {/* <FlatList
+          data={this.state.dataSource}
+          renderItem={({ item }) =>
+            <TouchableOpacity onPress={() => alert(item.book_name + " " + item.book_stade)}
+              style={styles.TouchableOpacityStyle}>
+              <Text>{item.book_name} - {item.book_stade}</Text>
+            </TouchableOpacity>
+          }
+        /> */}
+
+      </View>
+    );
+  }
+}
+
+const RootStack = createStackNavigator(
+  {
+    Inicio: Book,
+    Libros:listBooks,
+    Sesion:Users
+  },
+  {
+    initialRouteName: 'Sesion',
+  }
+);
+
+const AppContainer = createAppContainer(RootStack);
+
+export default class App extends React.Component {
+  render() {
+    return <AppContainer />;
+  }
+}
+
+const styles = StyleSheet.create({
+
+  MainContainer: {
+
+    alignItems: 'center',
+    flex: 1,
+    paddingTop: 30,
+    backgroundColor: '#fff'
+
+  },
+
+  TextInputStyleClass: {
+
+    textAlign: 'center',
+    width: '90%',
+    marginBottom: 7,
+    height: 40,
+    borderWidth: 1,
+    borderColor: '#FF5722',
+    borderRadius: 5,
+
+  },
+
+  TouchableOpacityStyle: {
+
+    paddingTop: 10,
+    paddingBottom: 10,
+    borderRadius: 5,
+    marginBottom: 7,
+    width: '90%',
+    backgroundColor: '#00BCD4'
+
+  },
+
+  TextStyle: {
+    color: '#fff',
+    textAlign: 'center',
+  },
+
+  rowViewContainer: {
+    fontSize: 20,
+    paddingRight: 10,
+    paddingTop: 10,
+    paddingBottom: 10,
+  }
+
+});
+***********************************************************************************************************************************************************************
+
+import React from 'react';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList, Alert } from 'react-native';
+
+export default class listBooks extends React.Component {
+
+    constructor(props) {
+
+        super(props)
+        this.state = {
+            dataSource: []
+        }
+    }
+    refreshBooks() {
+        fetch("http://localhost:8080/libro/ShowAllBooks.php")
+            .then((response) => response.json())
+            .then((responseJson) => {
+                this.setState({
+                    dataSource: responseJson
+                })
+            })
+    }
+
+    componentDidMount() {
+
+        this.refreshBooks();
+    
+      }
+
+    render() {
+        return (
+            <FlatList
+                data={this.state.dataSource}
+                renderItem={({ item }) =>
+                    <TouchableOpacity onPress={() => alert(item.book_name + " " + item.book_stade)}
+                        style={styles.TouchableOpacityStyle}>
+                        <Text>{item.book_name} - {item.book_stade}</Text>
+                    </TouchableOpacity>
+                }
+            />
+        )
+    }
+
+}
+
+const styles = StyleSheet.create({
+
+    MainContainer: {
+
+        alignItems: 'center',
+        flex: 1,
+        paddingTop: 30,
+        backgroundColor: '#fff'
+
+    },
+
+    TextInputStyleClass: {
+
+        textAlign: 'center',
+        width: '90%',
+        marginBottom: 7,
+        height: 40,
+        borderWidth: 1,
+        borderColor: '#FF5722',
+        borderRadius: 5,
+
+    },
+
+    TouchableOpacityStyle: {
+
+        paddingTop: 10,
+        paddingBottom: 10,
+        borderRadius: 5,
+        marginBottom: 3,
+        width: '100%',
+        backgroundColor: '#00BCD4'
+
+    },
+
+    TextStyle: {
+        color: '#fff',
+        textAlign: 'center',
+    },
+
+    rowViewContainer: {
+        fontSize: 20,
+        paddingRight: 10,
+        paddingTop: 10,
+        paddingBottom: 10,
+    }
+
+});
+
+**********************************************************************************************************************************************************************
+
+import React from 'react';
+import { Alert,StyleSheet, 
+  Text, View, TextInput, TouchableOpacity } from 'react-native';
+import App from '../App';
+
+export default class Users extends React.Component {
+
+  constructor(props) {
+
+    super(props)
+
+    this.state = {
+      ID: '',
+      Name: '',
+      Email: '',
+      Password: ''
+    }
+
+  }
+
+
+  SearchUser =  () => {
+
+    fetch(`http://localhost:8080/libro/SearchUser.php`, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+    },
+      body: JSON.stringify({
+        email: this.state.Email,
+        password: this.state.Password
+      })
+    })
+      .then((response) => response.json())
+      .then((responseJson) => {
+        this.setState({
+          Name: responseJson[0]['name'],
+          Email: responseJson[0]['email'],
+          Password: responseJson[0]['password']
+        })
+        this.props.navigation.navigate('Inicio', { 
+            Name: this.state.Name
+          })
+        //alert(this.state.Name);
+      }).catch((error) => {
+        alert('No se encuentra el Usuario');
+        this.setState({
+          ID: '',
+          Name: '',
+          Email: '',
+          Password: '',
+        })
+      });
+
+  }
+  
+RegisterUser = () => {
+    fetch("http://localhost:8080/libro/RegisterUser.php", {
+      method: "POST",
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        user_name: this.state.User_Name,
+        user_email: this.state.User_Email,
+        user_password: this.state.User_Password
+      })
+    })
+      .then((response) => response.json())
+      .then((responseJson) => {
+        alert(responseJson);
+        //this.refreshBooks();
+      })
+//this.props.navigation.navigate('Inicio', {Name: this.state.Name})
+      .catch((error) => {
+        console.error(error)
+      })
+  }
+
+
+  render() {
+    return (
+      <View style={styles.MainContainer}>
+        <Text style={{ fontSize: 20, textAlign: 'center', marginBottom: 7 }}> Registro de Usuarios </Text>
+        <TextInput
+          placeholder="Nombre de Usuario"
+          onChangeText={TextInputValue => this.setState({ Name: TextInputValue })}
+          underlineColorAndroid='transparent'
+          style={styles.TextInputStyleClass}
+          value={this.state.Name}
+          autoFocus={true}
+          
+        />
+        <TextInput
+          placeholder="Correo electrónico"
+          onChangeText={TextInputValue => this.setState({ Email: TextInputValue })}
+          underlineColorAndroid='transparent'
+          style={styles.TextInputStyleClass}
+          value={this.state.Email}
+        />
+        <TextInput
+          placeholder="Contraseña"
+          onChangeText={TextInputValue => this.setState({ Password: TextInputValue })}
+          underlineColorAndroid='transparent'
+          secureTextEntry={true}
+          style={styles.TextInputStyleClass}
+          value={this.state.Password}
+          
+        />
+        
+        <TouchableOpacity activeOpacity={.4} style={styles.TouchableOpacityStyle} onPress={this.SearchUser} >
+          <Text style={styles.TextStyle}> Iniciar Sesión </Text>
+        </TouchableOpacity>
+        <TouchableOpacity activeOpacity={.4} style={styles.TouchableOpacityStyle} onPress={this.RegisterUser} >
+          <Text style={styles.TextStyle}> Registrar </Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+}
+
+const styles = StyleSheet.create({
+
+  MainContainer: {
+
+    alignItems: 'center',
+    flex: 1,
+    paddingTop: 30,
+    backgroundColor: '#fff'
+
+  },
+
+  TextInputStyleClass: {
+
+    textAlign: 'center',
+    width: '90%',
+    marginBottom: 7,
+    height: 40,
+    borderWidth: 1,
+    borderColor: '#FF5722',
+    borderRadius: 5,
+
+  },
+
+  TouchableOpacityStyle: {
+
+    paddingTop: 10,
+    paddingBottom: 10,
+    borderRadius: 5,
+    marginBottom: 7,
+    width: '50%',
+    backgroundColor: '#00BCD4'
+
+  },
+
+  TextStyle: {
+    color: '#fff',
+    textAlign: 'center',
+  },
+
+  rowViewContainer: {
+    fontSize: 20,
+    paddingRight: 10,
+    paddingTop: 10,
+    paddingBottom: 10,
+  }
+
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
